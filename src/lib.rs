@@ -1,4 +1,4 @@
-pub fn patience_argsort<T: Ord + Eq + Copy>(v: Vec<T>) -> Vec<T> {
+pub fn patience_argsort<T: Ord + Copy>(v: Vec<T>) -> Vec<T> {
     if v.len() < 2 {
         return v;
     }
