@@ -1,4 +1,8 @@
 pub fn patience_argsort(v: Vec<u32>) -> Vec<u32> {
+    if v.len() < 2 {
+        return v;
+    }
+
     let mut piles: Vec<Vec<u32>> = vec![vec![v[0]]]; // by index so we can do back-pointers.
     let mut out: Vec<u32> = Vec::new();
 
@@ -41,6 +45,8 @@ pub fn patience_argsort(v: Vec<u32>) -> Vec<u32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // Bring the macros and other important things into scope.
+    use proptest::prelude::*;
 
     #[test]
     fn check_argsort() {
@@ -48,5 +54,12 @@ mod tests {
         assert_eq!(patience_argsort(v), vec![1, 4, 5, 8, 11]);
         // let before = include_str!("testdata/before.c");
         // let after = include_str!("testdata/after.c");
+    }
+
+    proptest! {
+        #[test]
+        fn propcheck_argsort(v in prop::collection::vec(0u32..1_000, 0..10)) {
+            patience_argsort(v);
+        }
     }
 }
