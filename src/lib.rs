@@ -1,13 +1,13 @@
-pub fn patience_argsort(v: Vec<u32>) -> Vec<u32> {
+pub fn patience_argsort<T: Ord + Eq + Copy>(v: Vec<T>) -> Vec<T> {
     if v.len() < 2 {
         return v;
     }
 
-    let mut piles: Vec<Vec<u32>> = vec![vec![v[0]]]; // by index so we can do back-pointers.
-    let mut out: Vec<u32> = Vec::new();
+    let mut piles: Vec<Vec<T>> = vec![vec![v[0]]]; // by index so we can do back-pointers.
+    let mut out: Vec<T> = Vec::new();
 
     // For the backpointer we use the fact that we only ever append on the right, i.e. once a
-    // column c exists the previous index will always be (c - 1), so we just need to store the
+    // column c exists the previous index will always be (c - 1), so we just need to store
     // (c - 1).len() at the time of insertion.
     // Note that we don't keep backpointers for the first heap (see index > 0 check below)
     let mut backpointer: Vec<Vec<usize>> = vec![];
@@ -55,6 +55,13 @@ mod tests {
         // let before = include_str!("testdata/before.c");
         // let after = include_str!("testdata/after.c");
     }
+
+    #[test]
+    fn check_patience_sort_strings() {
+        let v = vec!["a", "b", "f", "e", "c"];
+        assert_eq!(patience_argsort(v), vec!["a", "b", "f"]);
+    }
+
 
     proptest! {
         #[test]
