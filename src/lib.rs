@@ -11,7 +11,7 @@ enum UniqueCheck {
     Duplicated,
 }
 
-fn patience_argsort<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
+fn longest_increasing_subsequence<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
     if v.len() < 2 {
         return v.clone();
     }
@@ -58,9 +58,9 @@ where
     T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug,
     I: Iterator<Item = T>,
 {
-    let mut a_map: HashMap<T, UniqueCheck> = HashMap::new();
+    let mut unique_map: HashMap<T, UniqueCheck> = HashMap::new();
     for (ix, x) in iter.enumerate() {
-        match a_map.entry(x) {
+        match unique_map.entry(x) {
             Entry::Vacant(xe) => {
                 xe.insert(UniqueCheck::Line(ix + offset));
             }
@@ -72,7 +72,7 @@ where
             }
         }
     }
-    a_map
+    unique_map
 }
 
 pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<T>, b: Vec<T>) {
@@ -104,14 +104,14 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
                 match b_map.get(x) {
                     Some(UniqueCheck::Line(z)) => {
                         // somewhat unintuitive: We use tuples of (right-side, left-size), that
-                        // way the Ord trait works correctly in patience_argsort later.
+                        // way the Ord trait works correctly in longest_increasing_subsequence later.
                         rhs.push((*z, a0 + ix));
                     }
                     _ => {}
                 }
             }
         }
-        let rhs2 = patience_argsort(&rhs);
+        let rhs2 = longest_increasing_subsequence(&rhs);
         if rhs2.is_empty() {
             // TODO somehow transform the following into a diff structure.
             println!(
@@ -154,19 +154,19 @@ mod tests {
     #[test]
     fn check_argsort() {
         let v = vec![9, 13, 7, 12, 2, 1, 4, 6, 5, 8, 3, 11, 10];
-        assert_eq!(patience_argsort(&v), vec![1, 4, 5, 8, 11]);
+        assert_eq!(longest_increasing_subsequence(&v), vec![1, 4, 5, 8, 11]);
     }
 
     #[test]
     fn check_patience_sort_strings() {
         let v = vec!["a", "b", "f", "e", "c"];
-        assert_eq!(patience_argsort(&v), vec!["a", "b", "f"]);
+        assert_eq!(longest_increasing_subsequence(&v), vec!["a", "b", "f"]);
     }
 
     proptest! {
         #[test]
         fn propcheck_argsort(v in prop::collection::vec(0u32..1_000, 0..10)) {
-            patience_argsort(&v);
+            longest_increasing_subsequence(&v);
         }
     }
 }
