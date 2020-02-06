@@ -63,7 +63,7 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
         // TODO naming of variables is bad. maybe use ai, aj, bi, bj?
         println!("X h: {}, i: {}, j: {}, k: {}", h, i, j, k);
         let (sh, si, sj, sk) = (h, i, j, k);
-        while h < j && i < k && a[i] == b[i] {
+        while h < j && i < k && a[h] == b[i] {
             h += 1;
             i += 1;
         }
@@ -114,6 +114,8 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
             if a_map.contains_key(x) && b_map.contains_key(x) {
                 match b_map.get(x) {
                     Some(Some(z)) => {
+                        // somewhat unintuitive: We use tuples of (right-side, left-size), that
+                        // way the Ord trait works correctly in patience_argsort later.
                         rhs.push((*z, h + ix));
                     }
                     _ => {}
@@ -126,8 +128,16 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
         } else {
             println!("recurse {:?}", rhs2);
             // we know rhs[0].1 left matches rhs[0].0 right (swapped due to patience sort)
-            queue.push((h, i, rhs2[0].1, rhs2[0].0));
-            queue.push((rhs2[0].1 + 1, rhs2[0].0 + 1, sj, sk));
+
+            // the following needs to now loop over rhs2 and include all the spaces between matched lines
+            let start = vec![(i, h)];
+            let end = vec![(sk, sj)];
+            let together = start.iter().chain(rhs2.iter()).chain(end.iter());
+            // note that a and b are flipped because of the reversed tuple used in partience_argsort.
+            for ((b_start, a_start), (b_end, a_end)) in together.clone().zip(together.skip(1)) {
+                println!("a: {:?}->{:?}, b: {:?}->{:?}", a_start, a_end, b_start, b_end);
+                queue.push((*a_start, *b_start, *a_end, *b_end));
+            }
         }
     }
 }
@@ -142,8 +152,8 @@ mod tests {
     fn check_diff() {
         // let before = include_str!("testdata/before.c").lines().collect();
         // let after = include_str!("testdata/after.c").lines().collect();
-        let before = vec!["x", "y", "c"];
-        let after = vec!["x", "b", "y"];
+        let before = vec!["x", "y", "c", "z", "0"];
+        let after = vec!["x", "b", "y", "z", "1"];
         patience_diff(before, after);
     }
 
