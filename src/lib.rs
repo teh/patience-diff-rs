@@ -60,33 +60,28 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
     let bn = b.len();
 
     let mut queue: Vec<(usize, usize, usize, usize)> = vec![(0, 0, an, bn)];
-    println!("q {:?}", queue);
-
-    while let Some((mut h, mut i, mut j, mut k)) = queue.pop() {
-        // 1. walk from start, end until mismatch
-        // TODO naming of variables is bad. maybe use ai, aj, bi, bj?
-        println!("X h: {}, i: {}, j: {}, k: {}", h, i, j, k);
-        while h < j && i < k && a[h] == b[i] {
-            h += 1;
-            i += 1;
+    while let Some((mut a0, mut b0, mut a1, mut b1)) = queue.pop() {
+        // 1. Walk from start and end until mismatch. This removes
+        //    code common to both a and b.
+        while a0 < a1 && b0 < b1 && a[a0] == b[b0] {
+            a0 += 1;
+            b0 += 1;
         }
-        while j > h && k > i && a[j - 1] == b[k - 1] {
-            j -= 1;
-            k -= 1;
+        while a1 > a0 && b1 > b0 && a[a1 - 1] == b[b1 - 1] {
+            a1 -= 1;
+            b1 -= 1;
         }
-        println!("  h: {}, i: {}, j: {}, k: {}", h, i, j, k);
-        // anything from (si..i) and (j..sj), (k..sk) is the same and can be kept.
 
-        // 2. find matching uniques, keeping line numbers. We're using Some(i)
-        // to keep a line number, and None to mark duplicates. Should probably
-        // be its own enum..
+        // 2. find matching uniques, keeping line numbers. We're using an enum
+        // to keep track of the line number, and set it to Duplicated if already
+        // in the map.
         let mut a_map: HashMap<T, UniqueCheck> = HashMap::new();
         let mut b_map: HashMap<T, UniqueCheck> = HashMap::new();
 
-        for (ix, x) in a[h..j].iter().enumerate() {
+        for (ix, x) in a[a0..a1].iter().enumerate() {
             match a_map.entry(*x) {
                 Entry::Vacant(xe) => {
-                    xe.insert(UniqueCheck::Line(ix + h));
+                    xe.insert(UniqueCheck::Line(ix + a0));
                 }
                 Entry::Occupied(mut xe) => {
                     let xem = xe.get_mut();
@@ -98,10 +93,10 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
         }
 
         // TODO factor out into function
-        for (ix, x) in b[i..k].iter().enumerate() {
+        for (ix, x) in b[b0..b1].iter().enumerate() {
             match b_map.entry(*x) {
                 Entry::Vacant(xe) => {
-                    xe.insert(UniqueCheck::Line(ix + i));
+                    xe.insert(UniqueCheck::Line(ix + b0));
                 }
                 Entry::Occupied(mut xe) => {
                     let xem = xe.get_mut();
@@ -113,13 +108,13 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
         }
 
         let mut rhs: Vec<(usize, usize)> = Vec::new();
-        for (ix, x) in a[h..j].iter().enumerate() {
+        for (ix, x) in a[a0..a1].iter().enumerate() {
             if a_map.contains_key(x) && b_map.contains_key(x) {
                 match b_map.get(x) {
                     Some(UniqueCheck::Line(z)) => {
                         // somewhat unintuitive: We use tuples of (right-side, left-size), that
                         // way the Ord trait works correctly in patience_argsort later.
-                        rhs.push((*z, h + ix));
+                        rhs.push((*z, a0 + ix));
                     }
                     _ => {}
                 }
@@ -127,15 +122,13 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
         }
         let rhs2 = patience_argsort(&rhs);
         if rhs2.is_empty() {
-            println!("---\n{:?}\n+++\n{:?}", a[h..j].to_vec(), b[i..k].to_vec());
+            // TODO somehow transform the following into a diff structure.
+            println!("---\n{:?}\n+++\n{:?}", a[a0..a1].to_vec(), b[b0..b1].to_vec());
         } else {
-            println!("recurse {:?}", rhs2);
-            // we know rhs[0].1 left matches rhs[0].0 right (swapped due to patience sort)
-
-            // the following needs to now loop over rhs2 and include all the spaces between matched lines
-            let start = vec![(i, h)];
-            let end = vec![(j, k)];
+            let start = vec![(b0, a0)];
+            let end = vec![(b1, a1)];
             let together = start.iter().chain(rhs2.iter()).chain(end.iter());
+
             // note that a and b are flipped because of the reversed tuple used in partience_argsort.
             for ((b_start, a_start), (b_end, a_end)) in together.clone().zip(together.skip(1)) {
                 println!("a: {:?}->{:?}, b: {:?}->{:?}", a_start, a_end, b_start, b_end);
