@@ -15,8 +15,9 @@ fn longest_increasing_subsequence<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
     if v.len() < 2 {
         return v.clone();
     }
-
-    let mut piles: Vec<Vec<T>> = vec![vec![v[0]]]; // by index so we can do back-pointers.
+    // start with one element in list so we can skip empty-list check
+    // in binary_search_by below.
+    let mut piles: Vec<Vec<T>> = vec![vec![v[0]]];
     let mut out: Vec<T> = Vec::new();
 
     // For the backpointer we use the fact that we only ever append on the right, i.e. once a
@@ -55,7 +56,7 @@ fn longest_increasing_subsequence<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
 
 fn unique_check<T, I>(iter: I, offset: usize) -> HashMap<T, UniqueCheck>
 where
-    T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug,
+    T: Eq + Copy + std::hash::Hash,
     I: Iterator<Item = T>,
 {
     let mut unique_map: HashMap<T, UniqueCheck> = HashMap::new();
@@ -178,5 +179,7 @@ mod tests {
             patience_diff(v1, v2);
         }
 
+        // TODO: create properlu formatted unified diff and call `patch`
+        // , then check that we can patch A to get B witih `patch`.
     }
 }
