@@ -9,6 +9,12 @@ use std::iter::FromIterator;
 use std::ops::BitAnd;
 
 
+enum UniqueCheck {
+    Line(usize),
+    Duplicated,
+}
+
+
 pub fn patience_argsort<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
     if v.len() < 2 {
         return v.clone();
@@ -77,18 +83,18 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
         // 2. find matching uniques, keeping line numbers. We're using Some(i)
         // to keep a line number, and None to mark duplicates. Should probably
         // be its own enum..
-        let mut a_map: HashMap<T, Option<usize>> = HashMap::new();
-        let mut b_map: HashMap<T, Option<usize>> = HashMap::new();
+        let mut a_map: HashMap<T, UniqueCheck> = HashMap::new();
+        let mut b_map: HashMap<T, UniqueCheck> = HashMap::new();
 
         for (ix, x) in a[h..j].iter().enumerate() {
             match a_map.entry(*x) {
                 Entry::Vacant(xe) => {
-                    xe.insert(Some(ix + h));
+                    xe.insert(UniqueCheck::Line(ix + h));
                 }
                 Entry::Occupied(mut xe) => {
                     let xem = xe.get_mut();
-                    if xem.is_some() {
-                        *xem = None
+                    if let UniqueCheck::Line(_) = xem {
+                        *xem = UniqueCheck::Duplicated
                     }
                 }
             }
@@ -98,12 +104,12 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
         for (ix, x) in b[i..k].iter().enumerate() {
             match b_map.entry(*x) {
                 Entry::Vacant(xe) => {
-                    xe.insert(Some(ix + i));
+                    xe.insert(UniqueCheck::Line(ix + i));
                 }
                 Entry::Occupied(mut xe) => {
                     let xem = xe.get_mut();
-                    if xem.is_some() {
-                        *xem = None
+                    if let UniqueCheck::Line(_) = xem {
+                        *xem = UniqueCheck::Duplicated
                     }
                 }
             }
@@ -113,7 +119,7 @@ fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<
         for (ix, x) in a[h..j].iter().enumerate() {
             if a_map.contains_key(x) && b_map.contains_key(x) {
                 match b_map.get(x) {
-                    Some(Some(z)) => {
+                    Some(UniqueCheck::Line(z)) => {
                         // somewhat unintuitive: We use tuples of (right-side, left-size), that
                         // way the Ord trait works correctly in patience_argsort later.
                         rhs.push((*z, h + ix));
