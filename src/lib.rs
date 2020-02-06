@@ -156,10 +156,10 @@ mod tests {
 
     #[test]
     fn check_diff() {
-        // let before = include_str!("testdata/before.c").lines().collect();
-        // let after = include_str!("testdata/after.c").lines().collect();
-        let before = vec!["x", "y", "c", "z", "0"];
-        let after = vec!["x", "b", "y", "z", "1"];
+        let before = include_str!("testdata/before.c").lines().collect();
+        let after = include_str!("testdata/after.c").lines().collect();
+        // let before = vec!["x", "y", "c", "z", "0"];
+        // let after = vec!["x", "b", "y", "z", "1"];
         patience_diff(before, after);
     }
 
