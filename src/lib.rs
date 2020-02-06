@@ -6,12 +6,10 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-
 enum UniqueCheck {
     Line(usize),
     Duplicated,
 }
-
 
 fn patience_argsort<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
     if v.len() < 2 {
@@ -55,11 +53,33 @@ fn patience_argsort<T: Ord + Copy>(v: &Vec<T>) -> Vec<T> {
     out
 }
 
+fn unique_check<T, I>(iter: I, offset: usize) -> HashMap<T, UniqueCheck>
+where
+    T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug,
+    I: Iterator<Item = T>,
+{
+    let mut a_map: HashMap<T, UniqueCheck> = HashMap::new();
+    for (ix, x) in iter.enumerate() {
+        match a_map.entry(x) {
+            Entry::Vacant(xe) => {
+                xe.insert(UniqueCheck::Line(ix + offset));
+            }
+            Entry::Occupied(mut xe) => {
+                let xem = xe.get_mut();
+                if let UniqueCheck::Line(_) = xem {
+                    *xem = UniqueCheck::Duplicated
+                }
+            }
+        }
+    }
+    a_map
+}
+
 pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<T>, b: Vec<T>) {
     let an = a.len();
     let bn = b.len();
-
     let mut queue: Vec<(usize, usize, usize, usize)> = vec![(0, 0, an, bn)];
+
     while let Some((mut a0, mut b0, mut a1, mut b1)) = queue.pop() {
         // 1. Walk from start and end until mismatch. This removes
         //    code common to both a and b.
@@ -75,37 +95,8 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
         // 2. find matching uniques, keeping line numbers. We're using an enum
         // to keep track of the line number, and set it to Duplicated if already
         // in the map.
-        let mut a_map: HashMap<T, UniqueCheck> = HashMap::new();
-        let mut b_map: HashMap<T, UniqueCheck> = HashMap::new();
-
-        for (ix, x) in a[a0..a1].iter().enumerate() {
-            match a_map.entry(*x) {
-                Entry::Vacant(xe) => {
-                    xe.insert(UniqueCheck::Line(ix + a0));
-                }
-                Entry::Occupied(mut xe) => {
-                    let xem = xe.get_mut();
-                    if let UniqueCheck::Line(_) = xem {
-                        *xem = UniqueCheck::Duplicated
-                    }
-                }
-            }
-        }
-
-        // TODO factor out into function
-        for (ix, x) in b[b0..b1].iter().enumerate() {
-            match b_map.entry(*x) {
-                Entry::Vacant(xe) => {
-                    xe.insert(UniqueCheck::Line(ix + b0));
-                }
-                Entry::Occupied(mut xe) => {
-                    let xem = xe.get_mut();
-                    if let UniqueCheck::Line(_) = xem {
-                        *xem = UniqueCheck::Duplicated
-                    }
-                }
-            }
-        }
+        let a_map = unique_check(a[a0..a1].iter(), a0);
+        let b_map = unique_check(b[b0..b1].iter(), b0);
 
         let mut rhs: Vec<(usize, usize)> = Vec::new();
         for (ix, x) in a[a0..a1].iter().enumerate() {
@@ -123,7 +114,11 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
         let rhs2 = patience_argsort(&rhs);
         if rhs2.is_empty() {
             // TODO somehow transform the following into a diff structure.
-            println!("---\n{:?}\n+++\n{:?}", a[a0..a1].to_vec(), b[b0..b1].to_vec());
+            println!(
+                "---\n{:?}\n+++\n{:?}",
+                a[a0..a1].to_vec(),
+                b[b0..b1].to_vec()
+            );
         } else {
             let start = vec![(b0, a0)];
             let end = vec![(b1, a1)];
@@ -131,7 +126,10 @@ pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: 
 
             // note that a and b are flipped because of the reversed tuple used in partience_argsort.
             for ((b_start, a_start), (b_end, a_end)) in together.clone().zip(together.skip(1)) {
-                println!("a: {:?}->{:?}, b: {:?}->{:?}", a_start, a_end, b_start, b_end);
+                println!(
+                    "a: {:?}->{:?}, b: {:?}->{:?}",
+                    a_start, a_end, b_start, b_end
+                );
                 queue.push((*a_start, *b_start, *a_end, *b_end));
             }
         }
