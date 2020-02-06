@@ -75,7 +75,7 @@ where
     unique_map
 }
 
-pub fn patience_diff<T: Ord + Eq + Copy + std::hash::Hash + std::fmt::Debug>(a: Vec<T>, b: Vec<T>) {
+pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(a: Vec<T>, b: Vec<T>) {
     let an = a.len();
     let bn = b.len();
     let mut queue: Vec<(usize, usize, usize, usize)> = vec![(0, 0, an, bn)];
@@ -158,15 +158,25 @@ mod tests {
     }
 
     #[test]
-    fn check_patience_sort_strings() {
+    fn check_lis() {
         let v = vec!["a", "b", "f", "e", "c"];
         assert_eq!(longest_increasing_subsequence(&v), vec!["a", "b", "f"]);
     }
 
     proptest! {
         #[test]
-        fn propcheck_argsort(v in prop::collection::vec(0u32..1_000, 0..10)) {
+        fn propcheck_lis(v in prop::collection::vec(0u32..1_000, 0..10)) {
             longest_increasing_subsequence(&v);
         }
+
+
+        #[test]
+        fn propcheck_smoketest_diff(
+            v1 in prop::collection::vec("[abcdef]", 0..30),
+            v2 in prop::collection::vec("[abcdef]", 0..30)
+        ) {
+            patience_diff(v1, v2);
+        }
+
     }
 }
