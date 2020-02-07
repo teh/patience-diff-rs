@@ -216,8 +216,5 @@ mod tests {
         ) {
             patience_diff(v1, v2);
         }
-
-        // TODO: create properlu formatted unified diff and call `patch`
-        // , then check that we can patch A to get B witih `patch`.
     }
 }
