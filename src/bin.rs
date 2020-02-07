@@ -1,7 +1,7 @@
 use argh::FromArgs;
 use chrono::offset::Utc;
 use chrono::DateTime;
-use patience_diff::{patience_diff, Hunk, Range};
+use patience_diff::{patience_diff, Hunk};
 use std::cmp::{max, min};
 use std::path::{Path, PathBuf};
 
@@ -37,7 +37,6 @@ fn main() {
     let diff = patience_diff(&lines_a, &lines_b);
 
     let na = lines_a.len();
-    let nb = lines_b.len();
 
     let modified_a: DateTime<Utc> = std::fs::metadata(&args.a)
         .expect("could not extract metadata for file a")
@@ -84,7 +83,7 @@ fn main() {
     let mut j = 0;
     while i < stack.len() {
         let (start, end) = stack[i];
-        let Hunk { remove, insert } = diff[j];
+        let Hunk { insert, .. } = diff[j];
         println!(
             "@@ -{},{} +{},{} @@",
             start,
