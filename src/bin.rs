@@ -61,16 +61,16 @@ fn main() {
     // Collapse overlapping sections. We only need to do this for one side
     // because overlap will be by construction the same on both sides.
     let mut stack: Vec<(usize, usize)> = vec![(
-        max(0, diff[0].remove.start - args.context),
+        max(args.context, diff[0].remove.start) - args.context,
         min(na, diff[0].remove.end + args.context),
     )];
     for Hunk { remove, .. } in diff.iter().skip(1) {
         let mut top = stack.last_mut().unwrap();
-        if top.1 > remove.start - args.context {
+        if top.1 + args.context > remove.start {
             (*top).1 = min(na, max(top.1, remove.end + args.context));
         } else {
             let new_top = (
-                max(0, remove.start - args.context),
+                max(args.context, remove.start) - args.context,
                 min(remove.end + args.context, na),
             );
             stack.push(new_top);
@@ -79,6 +79,7 @@ fn main() {
 
     // Map overlapping sections back to the actual hunks. We know by
     // construction that they will line up so we can just left-merge.
+    // For format see: https://en.wikipedia.org/wiki/Diff#Unified_format
     let mut i = 0;
     let mut j = 0;
     while i < stack.len() {
@@ -88,8 +89,8 @@ fn main() {
             "@@ -{},{} +{},{} @@",
             start,
             end - start,
-            insert.start - args.context,
-            insert.end - insert.start
+            max(args.context, insert.start) - args.context,
+            insert.end - insert.start + 2 * args.context,
         );
         let mut inter_start = start;
         while j < diff.len() && diff[j].remove.end <= end {
@@ -105,36 +106,12 @@ fn main() {
                 println!("+{}", std::str::from_utf8(&lines_b[pp]).unwrap());
             }
             inter_start = remove.end;
-            // // only print as many lines as needed
-            // for pp in remove.end..remove.end + args.context {
-            //     println!(" {}", std::str::from_utf8(&lines_a[pp]).unwrap());
-            // }
             j += 1;
         }
+
         for pp in inter_start..end {
             println!(" {}", std::str::from_utf8(&lines_a[pp]).unwrap());
         }
         i += 1
     }
-
-    // for h in stack.iter() {
-    //     println!("S {:?}", h);
-    // }
-
-    //     println!(
-    //         "@@ -{},{} +{},{} @@",
-    //         remove.start, // TODO
-    //         remove.end - remove.start,
-    //         insert.start,
-    //         insert.end - insert.start
-    //     );
-    //     for i in remove.start..remove.end {
-    //         println!("-{}", std::str::from_utf8(&lines_a[i]).unwrap());
-    //     }
-    //     for i in insert.start..insert.end {
-    //         println!("+{}", std::str::from_utf8(&lines_b[i]).unwrap());
-    //     }
-    // }
-    // pretty print
-    // https://en.wikipedia.org/wiki/Diff#Unified_format
 }
