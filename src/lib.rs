@@ -76,10 +76,26 @@ where
     unique_map
 }
 
-pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(a: Vec<T>, b: Vec<T>) {
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+pub struct Range {
+    start: usize,
+    end: usize, // exclusive
+}
+
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+pub struct Hunk {
+    remove: Range,
+    insert: Range,
+}
+
+pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(
+    a: Vec<T>,
+    b: Vec<T>,
+) -> Vec<Hunk> {
     let an = a.len();
     let bn = b.len();
     let mut queue: Vec<(usize, usize, usize, usize)> = vec![(0, 0, an, bn)];
+    let mut out: Vec<Hunk> = Vec::new();
 
     while let Some((mut a0, mut b0, mut a1, mut b1)) = queue.pop() {
         // 1. Walk from start and end until mismatch. This removes
@@ -115,11 +131,10 @@ pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(a:
         let rhs2 = longest_increasing_subsequence(&rhs);
         if rhs2.is_empty() {
             // TODO somehow transform the following into a diff structure.
-            println!(
-                "---\n{:?}\n+++\n{:?}",
-                a[a0..a1].to_vec(),
-                b[b0..b1].to_vec()
-            );
+            out.push(Hunk {
+                remove: Range { start: a0, end: a1 },
+                insert: Range { start: b0, end: b1 },
+            });
         } else {
             let start = vec![(b0, a0)];
             let end = vec![(b1, a1)];
@@ -127,14 +142,12 @@ pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(a:
 
             // note that a and b are flipped because of the reversed tuple used in partience_argsort.
             for ((b_start, a_start), (b_end, a_end)) in together.clone().zip(together.skip(1)) {
-                println!(
-                    "a: {:?}->{:?}, b: {:?}->{:?}",
-                    a_start, a_end, b_start, b_end
-                );
                 queue.push((*a_start, *b_start, *a_end, *b_end));
             }
         }
     }
+    out.sort(); // TODO - do we need to pay down the sort here?
+    out
 }
 
 #[cfg(test)]
@@ -145,13 +158,38 @@ mod tests {
 
     #[test]
     fn check_diff() {
-        // let before = include_str!("testdata/before.c").lines().collect();
-        // let after = include_str!("testdata/after.c").lines().collect();
         let before = vec!["x", "y", "c", "z", "0"];
         let after = vec!["x", "b", "y", "z", "1"];
-        patience_diff(before, after);
+        assert_eq!(
+            patience_diff(before, after),
+            [
+                Hunk {
+                    remove: Range { start: 1, end: 1 },
+                    insert: Range { start: 1, end: 2 }
+                },
+                Hunk {
+                    remove: Range { start: 2, end: 3 },
+                    insert: Range { start: 3, end: 3 }
+                },
+                Hunk {
+                    remove: Range { start: 4, end: 5 },
+                    insert: Range { start: 4, end: 5 }
+                }
+            ]
+        )
     }
-
+    #[test]
+    fn check_file_example() {
+        let before = include_str!("testdata/before.c").lines().collect();
+        let after = include_str!("testdata/after.c").lines().collect();
+        assert_eq!(
+            patience_diff(before, after),
+            [Hunk {
+                remove: Range { start: 4, end: 4 },
+                insert: Range { start: 4, end: 8 }
+            }]
+        );
+    }
     #[test]
     fn check_argsort() {
         let v = vec![9, 13, 7, 12, 2, 1, 4, 6, 5, 8, 3, 11, 10];
