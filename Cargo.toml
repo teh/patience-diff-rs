@@ -3,6 +3,9 @@ name = "patience-diff"
 version = "0.1.0"
 authors = ["Tom Hunger <tehunger@gmail.com>"]
 edition = "2018"
+license-file = "LICENSE-MIT"
+description = "patience diff as a library and a small command line tool"
+homepage = "https://github.com/teh/patience-diff-rs"
 
 [dependencies]
 # At some point in the future we might have
