@@ -1,7 +1,7 @@
 use argh::FromArgs;
 use chrono::offset::Utc;
 use chrono::DateTime;
-use patience_diff::{patience_diff, Hunk};
+use patience_diff_rs::{patience_diff, Hunk};
 use std::cmp::{max, min};
 use std::path::{Path, PathBuf};
 

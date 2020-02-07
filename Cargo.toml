@@ -1,6 +1,6 @@
 [package]
-name = "patience-diff"
-version = "0.1.0"
+name = "patience-diff-rs"
+version = "0.1.1"
 authors = ["Tom Hunger <tehunger@gmail.com>"]
 edition = "2018"
 license-file = "LICENSE-MIT"
