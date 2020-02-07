@@ -132,7 +132,7 @@ pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(
         if rhs2.is_empty() {
             // only push if either a or b make an interesting contribution to
             // the diff.
-            if (a1 - a0 > 0 || b1 - b0 > 0) {
+            if a1 - a0 > 0 || b1 - b0 > 0 {
                 out.push(Hunk {
                     remove: Range { start: a0, end: a1 },
                     insert: Range { start: b0, end: b1 },
