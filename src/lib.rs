@@ -82,7 +82,7 @@ pub struct Range {
     pub end: usize, // exclusive
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Hunk {
     pub remove: Range,
     pub insert: Range,
@@ -130,11 +130,14 @@ pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(
         }
         let rhs2 = longest_increasing_subsequence(&rhs);
         if rhs2.is_empty() {
-            // TODO somehow transform the following into a diff structure.
-            out.push(Hunk {
-                remove: Range { start: a0, end: a1 },
-                insert: Range { start: b0, end: b1 },
-            });
+            // only push if either a or b make an interesting contribution to
+            // the diff.
+            if (a1 - a0 > 0 || b1 - b0 > 0) {
+                out.push(Hunk {
+                    remove: Range { start: a0, end: a1 },
+                    insert: Range { start: b0, end: b1 },
+                });
+            }
         } else {
             let start = vec![(b0, a0)];
             let end = vec![(b1, a1)];
