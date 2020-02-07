@@ -76,21 +76,21 @@ where
     unique_map
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 pub struct Range {
-    start: usize,
-    end: usize, // exclusive
+    pub start: usize,
+    pub end: usize, // exclusive
 }
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Hunk {
-    remove: Range,
-    insert: Range,
+    pub remove: Range,
+    pub insert: Range,
 }
 
 pub fn patience_diff<T: Ord + Eq + Clone + std::hash::Hash + std::fmt::Debug>(
-    a: Vec<T>,
-    b: Vec<T>,
+    a: &Vec<T>,
+    b: &Vec<T>,
 ) -> Vec<Hunk> {
     let an = a.len();
     let bn = b.len();
@@ -161,7 +161,7 @@ mod tests {
         let before = vec!["x", "y", "c", "z", "0"];
         let after = vec!["x", "b", "y", "z", "1"];
         assert_eq!(
-            patience_diff(before, after),
+            patience_diff(&before, &after),
             [
                 Hunk {
                     remove: Range { start: 1, end: 1 },
@@ -183,7 +183,7 @@ mod tests {
         let before = include_str!("testdata/before.c").lines().collect();
         let after = include_str!("testdata/after.c").lines().collect();
         assert_eq!(
-            patience_diff(before, after),
+            patience_diff(&before, &after),
             [Hunk {
                 remove: Range { start: 4, end: 4 },
                 insert: Range { start: 4, end: 8 }
@@ -214,7 +214,7 @@ mod tests {
             v1 in prop::collection::vec("[abcdef]", 0..30),
             v2 in prop::collection::vec("[abcdef]", 0..30)
         ) {
-            patience_diff(v1, v2);
+            patience_diff(&v1, &v2);
         }
     }
 }
